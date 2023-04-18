@@ -1,0 +1,4 @@
+include pyproject.toml
+include CHANGELOG.rst
+graft bumpversion
+global-exclude __pycache__/*

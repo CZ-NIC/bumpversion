@@ -1,0 +1,69 @@
+variables:
+    DOCKER_REGISTRY: "reg.nic.cz"
+    # Set up pip cache shared between all jobs of the project.
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    PIP_INDEX_URL:
+        value: "https://pypi.nic.cz/cznic/public"
+        description: "PyPI index to be used."
+    PYTHONWARNINGS: ""
+    TOX_PARALLEL_NO_SPINNER: 1
+
+stages:
+    - test
+    - build
+    - publish
+    - devpi_push
+
+cache:
+    paths:
+        - .cache/pip
+
+########################################################################################################################
+# Basic declarations
+.py38: &py38
+    image: "$DOCKER_REGISTRY/python/tox:3.8"
+
+.py39: &py39
+    image: "$DOCKER_REGISTRY/python/tox:3.9"
+
+.py310: &py310
+    image: "$DOCKER_REGISTRY/python/tox:3.10"
+
+.py311: &py311
+    image: "$DOCKER_REGISTRY/python/tox:3.11"
+
+.test: &test
+    stage: test
+    before_script:
+        - echo "Active index - $PIP_INDEX_URL"
+        # First, build all virtualenvs without actually executing any tests.
+        - tox --parallel all --notest
+    script:
+        - tox
+    coverage: '/TOTAL(?:\s+\d+){4}\s+(\d+\%)/'
+    interruptible: true
+
+########################################################################################################################
+# Individual jobs
+test:py38:
+    <<: *test
+    <<: *py38
+
+test:py39:
+    <<: *test
+    <<: *py39
+
+test:py310:
+    <<: *test
+    <<: *py310
+
+test:py311:
+    <<: *test
+    <<: *py311
+
+build:
+    stage: build
+    image: "$DOCKER_REGISTRY/python/build:py3.8"
+    script:
+        - python3 -m build
+    needs: []
