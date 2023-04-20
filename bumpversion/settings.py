@@ -3,28 +3,31 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import tomli
-from pydantic import BaseModel, BaseSettings, Extra, Field, FilePath
+from pydantic import BaseModel, BaseSettings, Extra, Field, FilePath, PrivateAttr
 from pydantic.env_settings import SettingsSourceCallable
 
+from .constants import Verbosity
+
 CONFIG_FILES = {
-    "bumpversion.toml": False,
-    "pyproject.toml": True,
+    "bumpversion.toml": ["bumpversion"],
+    "pyproject.toml": ["tool", "bumpversion"],
 }
 
 
 def _config_file_settings(settings: "Settings") -> Dict[str, Any]:
-    for name in CONFIG_FILES.keys():
-        full_name = os.path.expanduser(name)
-        if os.path.isfile(full_name):
-            config_file = full_name
-            pyproject_file = CONFIG_FILES[name]
-            break
+    config_file = settings._config_file
+    sections = ["bumpversion"]
+    if config_file is None:
+        for config_file, _sections in CONFIG_FILES.items():
+            if os.path.isfile(config_file):
+                sections = _sections
+                break
     if config_file:
         with open(config_file) as file:
             content = tomli.loads(file.read())
-            if pyproject_file:
-                content = content.get("tool", {})
-            return cast(Dict[str, Any], content.get("bumpversion", {}))
+            for section in sections:
+                content = content.get(section, {})
+            return content
     return {}
 
 
@@ -63,9 +66,13 @@ class File(BaseModel):
 class Settings(BaseSettings):
     """Settings."""
 
+    _config_file: Optional[str] = PrivateAttr(None)
+    _verbosity: Verbosity = PrivateAttr(Verbosity.INFO)
+
+    dry_run: bool = False
     commit: bool = False
     tag: bool = False
-    allow_dirty: str = ""
+    allow_dirty: bool = False
     current_version: Optional[str] = None
     version_schema: Dict[str, Schema] = Field(default_factory=dict, alias="schema")
     file: List[File] = []
@@ -87,3 +94,7 @@ class Settings(BaseSettings):
                 cast(SettingsSourceCallable, _config_file_settings),
                 file_secret_settings,
             )
+
+    def __init__(self, *args: Any, config_file: Optional[str] = None, **kwargs: Any):
+        self._config_file = config_file
+        super().__init__(*args, **kwargs)
