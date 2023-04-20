@@ -12,3 +12,5 @@ __pycache__/
 /.coverage*
 # mypy
 /.mypy_cache/
+# Docs
+/docs/_build/
