@@ -40,6 +40,7 @@ cache:
         - tox --parallel all --notest
     script:
         - tox
+        - tox -e docs
     coverage: '/TOTAL(?:\s+\d+){4}\s+(\d+\%)/'
     interruptible: true
 

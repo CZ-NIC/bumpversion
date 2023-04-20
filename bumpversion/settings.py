@@ -3,7 +3,16 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import tomli
-from pydantic import BaseModel, BaseSettings, Extra, Field, FilePath, PrivateAttr, root_validator
+from pydantic import (
+    BaseModel,
+    BaseSettings,
+    Extra,
+    Field,
+    FilePath,
+    PrivateAttr,
+    root_validator,
+    validator,
+)
 from pydantic.env_settings import SettingsSourceCallable
 
 from .constants import Verbosity
@@ -48,8 +57,8 @@ class File(BaseModel):
     """Definition of maintained file."""
 
     path: FilePath
-    serializer: Optional[Component] = None
-    replacer: Optional[Component] = None
+    serializer: Component
+    replacer: Component
 
     class Config:
         extra = Extra.allow
@@ -101,19 +110,13 @@ class Settings(BaseSettings):
         if values.get("version_schema") is not None:
             # Schema is defined, we are going to use that
             return values
-        bumper = values.get("bumper")
         parser = values.get("parser")
         serializer = values.get("serializer")
         replacer = values.get("replacer")
-        if (
-            bumper is not None
-            and parser is not None
-            and serializer is not None
-            and replacer is not None
-        ):
+        if parser is not None and serializer is not None and replacer is not None:
             # We have all parts defined separatelly
             return values
-        if bumper is not None and parser is not None:
+        if parser is not None:
             # We have root level parser and bumper...
             # Lets have a look if we have parser/serializer in files
             for file in values.get("file", []):
@@ -123,3 +126,14 @@ class Settings(BaseSettings):
                     raise ValueError(f"{file.path} setting is missing replacer option")
             return values
         raise ValueError("Incomplete schema definition settings")
+
+    @validator("file", each_item=True, pre=True)
+    def fill_files(cls, v: Dict[str, Any], values: Dict[str, Any]) -> Dict[str, Any]:
+        """Make sure that all files have all settings."""
+        serializer = values.get("serializer")
+        replacer = values.get("replacer")
+        if v.get("serializer") is None:
+            v["serializer"] = serializer
+        if v.get("replacer") is None:
+            v["replacer"] = replacer
+        return v
