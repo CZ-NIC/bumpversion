@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     tag: bool = False
     allow_dirty: bool = False
     current_version: Optional[str] = None
-    version_schema: Optional[str] = Field(default=None, alias="schema")
+    version_schema: Optional[str] = Field(default=None, alias="schema", env="schema")
     bumper: Optional[Component] = None
     parser: Optional[Component] = None
     serializer: Optional[Component] = None
