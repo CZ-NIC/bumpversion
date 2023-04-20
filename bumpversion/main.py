@@ -35,10 +35,15 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
         "allow_dirty": settings.allow_dirty,
         "commit": settings.commit,
         "tag": settings.tag,
+        "current_version": settings.current_version,
     }
 
 
 # TODO: Show effective default loaded from config file.
+@click.option(
+    "--current-version",
+    help="Version that needs to be updated",
+)
 @click.option(
     "--tag/--no-tag",
     help="Create a tag in version control",
@@ -85,10 +90,16 @@ def main(
     allow_dirty: bool,
     commit: bool,
     tag: bool,
+    current_version: str,
 ) -> None:
     """Bump the project version."""
     settings = Settings(
-        config_file=config_file, dry_run=dry_run, allow_dirty=allow_dirty, commit=commit, tag=tag
+        config_file=config_file,
+        dry_run=dry_run,
+        allow_dirty=allow_dirty,
+        commit=commit,
+        tag=tag,
+        current_version=current_version,
     )
     settings._verbosity = verbosity
     echo(f"New version: {new_version}", Verbosity.DEBUG, settings=settings)
