@@ -2,11 +2,12 @@
 from .bumper import RegexBumper, SemVerBumper
 from .parser import PEP440Parser, SemVerParser
 from .replacer import SearchReplaceReplacer
-from .serializer import PEP440Serializer, SemVerSerializer
+from .serializer import FormatSerializer, PEP440Serializer, SemVerSerializer
 
 __version__ = "0.1.0"
 
 __all__ = [
+    "FormatSerializer",
     "PEP440Parser",
     "PEP440Serializer",
     "RegexBumper",
