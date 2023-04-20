@@ -151,6 +151,21 @@ def main(
                 new_version=serializer(parsed_new_version),
                 **file.dict(exclude={"serializer", "replacer"}),
             )
+    # Bump config file, if present
+    if settings._config_file:
+        echo(f"Bumping file {settings._config_file}", Verbosity.INFO, settings=settings)
+        if not settings.dry_run:
+            serializer = load_instance(
+                settings.serializer.cls, **settings.serializer.dict(exclude={"cls"})
+            )
+            replacer = load_instance(
+                settings.replacer.cls, **settings.replacer.dict(exclude={"cls"})
+            )
+            replacer(
+                current_version=serializer(parsed_current_version),
+                new_version=serializer(parsed_new_version),
+                path=settings._config_file,
+            )
 
     if commit:
         # Add files to commit.
