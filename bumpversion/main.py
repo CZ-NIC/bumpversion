@@ -22,6 +22,8 @@ def echo(
         err: Whether to print the message to error output instead.
     """
     if verbosity <= settings._verbosity:
+        if settings.dry_run:
+            message = "[dry-run] " + message
         _echo(message, nl=nl, err=err)
 
 
@@ -93,6 +95,13 @@ def main(
     echo(f"Verbosity: {verbosity}", Verbosity.DEBUG, settings=settings)
     echo(f"Config file: {config_file}", Verbosity.DEBUG, settings=settings)
     echo(f"Settings: {settings}", Verbosity.DEBUG, settings=settings)
+
+    for file in settings.file:
+        echo(f"[TODO!] Bumping file {file.path}", Verbosity.INFO, settings=settings)
+    if commit:
+        echo("[TODO!] Commit", Verbosity.INFO, settings=settings)
+    if tag:
+        echo("[TODO!] Tag", Verbosity.INFO, settings=settings)
 
 
 if __name__ == "__main__":
