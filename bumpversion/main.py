@@ -1,4 +1,5 @@
 """Command line interface."""
+import subprocess  # nosec
 from typing import Optional
 
 import click
@@ -101,7 +102,9 @@ def main(
     if commit:
         echo("[TODO!] Commit", Verbosity.INFO, settings=settings)
     if tag:
-        echo("[TODO!] Tag", Verbosity.INFO, settings=settings)
+        echo("Tagging {new_version}", Verbosity.INFO, settings=settings)
+        if not settings.dry_run:
+            subprocess.run(["git", "tag", new_version], check=True)  # nosec
 
 
 if __name__ == "__main__":
