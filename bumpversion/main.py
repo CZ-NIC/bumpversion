@@ -1,13 +1,14 @@
 """Command line interface."""
 import subprocess  # nosec
-from typing import Optional
+from typing import Optional, cast
 
 import click
 from click import echo as _echo
 
 from bumpversion import __version__
 from bumpversion.constants import Verbosity
-from bumpversion.settings import Settings
+from bumpversion.settings import Component, Settings
+from bumpversion.utils import load_instance
 
 
 def echo(
@@ -103,13 +104,29 @@ def main(
         current_version=current_version,
     )
     settings._verbosity = verbosity
+
+    parser = load_instance(
+        cast(Component, settings.parser).cls,
+        **cast(Component, settings.parser).dict(exclude={"cls"}),
+    )
+    parsed_current_version = parser(current_version)
+    parsed_new_version = parser(new_version)
+
     echo(f"New version: {new_version}", Verbosity.DEBUG, settings=settings)
     echo(f"Verbosity: {verbosity}", Verbosity.DEBUG, settings=settings)
     echo(f"Config file: {config_file}", Verbosity.DEBUG, settings=settings)
     echo(f"Settings: {settings}", Verbosity.DEBUG, settings=settings)
 
     for file in settings.file:
-        echo(f"[TODO!] Bumping file {file.path}", Verbosity.INFO, settings=settings)
+        echo(f"Bumping file {file.path}", Verbosity.INFO, settings=settings)
+        serializer = load_instance(file.serializer.cls, **file.serializer.dict(exclude={"cls"}))
+        replacer = load_instance(file.replacer.cls, **file.replacer.dict(exclude={"cls"}))
+        if not settings.dry_run:
+            replacer(
+                current_version=serializer(parsed_current_version),
+                new_version=serializer(parsed_new_version),
+                **file.dict(exclude={"serializer", "replacer"}),
+            )
     if commit:
         echo("[TODO!] Commit", Verbosity.INFO, settings=settings)
     if tag:

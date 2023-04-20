@@ -6,24 +6,27 @@ from typing import Any
 class SearchReplaceReplacer:
     """Search and replace versions in file."""
 
-    def __call__(
+    def __init__(
         self,
-        *,
-        path: Path,
-        search: str = "{old_version}",
+        search: str = "{current_version}",
         replace: str = "{new_version}",
-        **kwargs: Any
     ) -> None:
+        self.search = search
+        self.replace = replace
+
+    def __call__(self, *, path: Path, **kwargs: Any) -> None:
         """Replace version occurences in file."""
         with open(path, "r") as fh:
             file_content = fh.read()
 
-        if not search.format(**kwargs) in file_content:
+        if not self.search.format(**kwargs) in file_content:
             raise RuntimeError(
-                "Pattern {} was not found in file {}".format(search.format(**kwargs), path)
+                "Pattern {} was not found in file {}".format(self.search.format(**kwargs), path)
             )
 
-        replaced = file_content.replace(search.format(**kwargs), replace.format(**kwargs))
+        replaced = file_content.replace(
+            self.search.format(**kwargs), self.replace.format(**kwargs)
+        )
 
         with open(path, "w") as fh:
             fh.write(replaced)
