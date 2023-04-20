@@ -14,8 +14,10 @@ from pydantic import (
     validator,
 )
 from pydantic.env_settings import SettingsSourceCallable
+from pydantic.fields import ModelField
 
 from .constants import Verbosity
+from .schemas import Schema, get_schema
 
 CONFIG_FILES = {
     "bumpversion.toml": ["bumpversion"],
@@ -75,11 +77,11 @@ class Settings(BaseSettings):
     tag: bool = False
     allow_dirty: bool = False
     current_version: Optional[str] = None
-    version_schema: Optional[str] = Field(default=None, alias="schema", env="schema")
-    bumper: Optional[Component] = None
-    parser: Optional[Component] = None
-    serializer: Optional[Component] = None
-    replacer: Optional[Component] = None
+    version_schema: Optional[Schema] = Field(default=None, alias="schema", env="schema")
+    bumper: Component = Field(default=None)  # type: ignore[assignment]
+    parser: Component = Field(default=None)  # type: ignore[assignment]
+    serializer: Component = Field(default=None)  # type: ignore[assignment]
+    replacer: Component = Field(default=None)  # type: ignore[assignment]
     file: List[File] = []
 
     class Config:
@@ -136,4 +138,13 @@ class Settings(BaseSettings):
             v["serializer"] = serializer
         if v.get("replacer") is None:
             v["replacer"] = replacer
+        return v
+
+    @validator("bumper", "parser", "serializer", "replacer", pre=True)
+    def fill_schema(
+        cls, v: Optional[Dict[str, Any]], field: ModelField, values: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Fill values if schema is used."""
+        if v is None and values.get("version_schema") is not None:
+            v = get_schema(cast(Schema, values.get("version_schema")), field.name)
         return v

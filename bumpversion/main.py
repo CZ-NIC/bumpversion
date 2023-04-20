@@ -1,12 +1,12 @@
 """Command line interface."""
-from typing import Optional, cast
+from typing import Optional
 
 import click
 from click import echo as _echo
 
 from bumpversion import __version__
 from bumpversion.constants import Verbosity
-from bumpversion.settings import Component, Settings
+from bumpversion.settings import Settings
 from bumpversion.utils import load_instance
 from bumpversion.vcs import Git
 
@@ -106,8 +106,8 @@ def main(
     settings._verbosity = verbosity
 
     parser = load_instance(
-        cast(Component, settings.parser).cls,
-        **cast(Component, settings.parser).dict(exclude={"cls"}),
+        settings.parser.cls,
+        **settings.parser.dict(exclude={"cls"}),
     )
     parsed_current_version = parser(current_version)
     parsed_new_version = parser(new_version)
