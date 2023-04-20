@@ -130,7 +130,7 @@ def main(
             settings.bumper.cls,
             **settings.bumper.dict(exclude={"cls"}),
         )
-        parsed_new_version = bumper(parsed_current_version, parts)
+        parsed_new_version = bumper(parsed_current_version.copy(), parts)
 
     echo(f"Parsed new version: {parsed_new_version}", Verbosity.DEBUG, settings=settings)
 
@@ -147,8 +147,8 @@ def main(
         replacer = load_instance(file.replacer.cls, **file.replacer.dict(exclude={"cls"}))
         if not settings.dry_run:
             replacer(
-                current_version=serializer(parsed_current_version),
-                new_version=serializer(parsed_new_version),
+                current_version=serializer(parsed_current_version.copy()),
+                new_version=serializer(parsed_new_version.copy()),
                 **file.dict(exclude={"serializer", "replacer"}),
             )
     # Bump config file, if present
@@ -162,8 +162,8 @@ def main(
                 settings.replacer.cls, **settings.replacer.dict(exclude={"cls"})
             )
             replacer(
-                current_version=serializer(parsed_current_version),
-                new_version=serializer(parsed_new_version),
+                current_version=serializer(parsed_current_version.copy()),
+                new_version=serializer(parsed_new_version.copy()),
                 path=settings._config_file,
             )
 
