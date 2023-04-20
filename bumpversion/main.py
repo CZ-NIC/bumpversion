@@ -1,5 +1,4 @@
 """Command line interface."""
-import subprocess  # nosec
 from typing import Optional, cast
 
 import click
@@ -9,6 +8,7 @@ from bumpversion import __version__
 from bumpversion.constants import Verbosity
 from bumpversion.settings import Component, Settings
 from bumpversion.utils import load_instance
+from bumpversion.vcs import Git
 
 
 def echo(
@@ -117,6 +117,13 @@ def main(
     echo(f"Config file: {config_file}", Verbosity.DEBUG, settings=settings)
     echo(f"Settings: {settings}", Verbosity.DEBUG, settings=settings)
 
+    vcs = Git()
+    # Check dirty
+    dirty_files = tuple(vcs.get_dirty_files())
+    if not settings.allow_dirty and dirty_files:
+        exit(f"Git directory not clean: {dirty_files}")
+
+    # Bump files
     for file in settings.file:
         echo(f"Bumping file {file.path}", Verbosity.INFO, settings=settings)
         serializer = load_instance(file.serializer.cls, **file.serializer.dict(exclude={"cls"}))
@@ -127,12 +134,22 @@ def main(
                 new_version=serializer(parsed_new_version),
                 **file.dict(exclude={"serializer", "replacer"}),
             )
+
     if commit:
-        echo("[TODO!] Commit", Verbosity.INFO, settings=settings)
-    if tag:
-        echo("Tagging {new_version}", Verbosity.INFO, settings=settings)
+        # Add files to commit.
+        for file in settings.file:
+            echo(f"Adding {file.path}", Verbosity.INFO, settings=settings)
+            if not settings.dry_run:
+                vcs.add_file(file.path)
+        # Do commit.
+        message = f"Bump version: {current_version} → {new_version}"
+        echo(f"Commiting: {message}", Verbosity.INFO, settings=settings)
         if not settings.dry_run:
-            subprocess.run(["git", "tag", new_version], check=True)  # nosec
+            vcs.commit(message)
+    if tag:
+        echo(f"Tagging {new_version}", Verbosity.INFO, settings=settings)
+        if not settings.dry_run:
+            vcs.tag(new_version)
 
 
 if __name__ == "__main__":
