@@ -10,18 +10,18 @@ from bumpversion.settings import Settings
 
 
 def echo(
-    message: str, level: Verbosity, verbosity: Verbosity, *, nl: bool = True, err: bool = False
+    message: str, verbosity: Verbosity, *, settings: Settings, nl: bool = True, err: bool = False
 ) -> None:
     """Print message with respect to verbosity level.
 
     Arguments:
         message: The message to print.
-        level: A verbosity level of the message.
-        verbosity: Verbosity level setting.
+        verbosity: A verbosity level of the message.
+        settings: Settings.
         nl: Whether to print newline after message.
         err: Whether to print the message to error output instead.
     """
-    if level <= verbosity:
+    if verbosity <= settings._verbosity:
         _echo(message, nl=nl, err=err)
 
 
@@ -85,14 +85,14 @@ def main(
     tag: bool,
 ) -> None:
     """Bump the project version."""
-    echo(f"New version: {new_version}", Verbosity.DEBUG, verbosity)
-    echo(f"Verbosity: {verbosity}", Verbosity.DEBUG, verbosity)
-    echo(f"Config file: {config_file}", Verbosity.DEBUG, verbosity)
     settings = Settings(
         config_file=config_file, dry_run=dry_run, allow_dirty=allow_dirty, commit=commit, tag=tag
     )
     settings._verbosity = verbosity
-    echo(f"Settings: {settings}", Verbosity.DEBUG, settings._verbosity)
+    echo(f"New version: {new_version}", Verbosity.DEBUG, settings=settings)
+    echo(f"Verbosity: {verbosity}", Verbosity.DEBUG, settings=settings)
+    echo(f"Config file: {config_file}", Verbosity.DEBUG, settings=settings)
+    echo(f"Settings: {settings}", Verbosity.DEBUG, settings=settings)
 
 
 if __name__ == "__main__":
