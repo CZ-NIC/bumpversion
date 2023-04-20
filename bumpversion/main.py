@@ -1,5 +1,5 @@
 """Command line interface."""
-from typing import Optional
+from typing import Optional, Tuple
 
 import click
 from click import echo as _echo
@@ -46,6 +46,7 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
     "--current-version",
     help="Version that needs to be updated",
 )
+@click.option("--new-version", help="New version that should be in the files")
 @click.option(
     "--tag/--no-tag",
     help="Create a tag in version control",
@@ -82,9 +83,10 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
     help="Set verbosity level.",
 )
 @click.version_option(version=__version__, message="bumpversion %(version)s")
-@click.argument("new-version")
+@click.argument("parts", nargs=-1)
 @click.command()
 def main(
+    parts: Tuple[str, ...],
     new_version: str,
     verbosity: Verbosity,
     config_file: Optional[str],
@@ -95,6 +97,10 @@ def main(
     current_version: str,
 ) -> None:
     """Bump the project version."""
+    if not parts and not new_version:
+        raise click.BadParameter("Either parts or --new-version must be defined.")
+    if parts and new_version:
+        raise click.BadParameter("Only one of parts or --new-version must be defined.")
     settings = Settings(
         config_file=config_file,
         dry_run=dry_run,
@@ -105,17 +111,28 @@ def main(
     )
     settings._verbosity = verbosity
 
+    echo(f"Parts: {parts}", Verbosity.DEBUG, settings=settings)
+    echo(f"New version: {new_version}", Verbosity.DEBUG, settings=settings)
+    echo(f"Verbosity: {verbosity}", Verbosity.DEBUG, settings=settings)
+    echo(f"Config file: {config_file}", Verbosity.DEBUG, settings=settings)
+    echo(f"Settings: {settings}", Verbosity.DEBUG, settings=settings)
+
     parser = load_instance(
         settings.parser.cls,
         **settings.parser.dict(exclude={"cls"}),
     )
     parsed_current_version = parser(current_version)
-    parsed_new_version = parser(new_version)
 
-    echo(f"New version: {new_version}", Verbosity.DEBUG, settings=settings)
-    echo(f"Verbosity: {verbosity}", Verbosity.DEBUG, settings=settings)
-    echo(f"Config file: {config_file}", Verbosity.DEBUG, settings=settings)
-    echo(f"Settings: {settings}", Verbosity.DEBUG, settings=settings)
+    if new_version:
+        parsed_new_version = parser(new_version)
+    else:
+        bumper = load_instance(
+            settings.bumper.cls,
+            **settings.bumper.dict(exclude={"cls"}),
+        )
+        parsed_new_version = bumper(parsed_current_version, parts)
+
+    echo(f"Parsed new version: {parsed_new_version}", Verbosity.DEBUG, settings=settings)
 
     vcs = Git()
     # Check dirty
