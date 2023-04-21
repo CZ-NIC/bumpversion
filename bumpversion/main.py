@@ -37,7 +37,7 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
         "dry_run": settings.dry_run,
         "allow_dirty": settings.allow_dirty,
         "commit": settings.commit,
-        "message": settings.commit_message,
+        "commit_message": settings.commit_message,
         "commit_args": settings.commit_args,
         "tag": settings.tag,
         "tag_name": settings.tag_name,
