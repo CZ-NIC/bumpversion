@@ -95,20 +95,21 @@ class RegexBumper:
 
     def __call__(self, version: Dict[str, str], bumped_parts: List[str]) -> Dict[str, str]:
         """Bump version specified in bumped_parts."""
+        new_version = version.copy()
         for part in bumped_parts:
-            parsed_version = version.get(part)
+            parsed_version = new_version.get(part)
             if parsed_version is None:
-                version[part] = str(self.parts.get(part, {}).get("start", 1))
+                new_version[part] = str(self.parts.get(part, {}).get("start", 1))
             else:
-                version[part] = self._increase_number(parsed_version)
+                new_version[part] = self._increase_number(parsed_version)
             # Set the rest of the parts to nulls
-            bumped_index = list(version).index(part)
-            keys_to_null = list(version)[bumped_index + 1 :]
+            bumped_index = list(new_version).index(part)
+            keys_to_null = list(new_version)[bumped_index + 1 :]
             for key in keys_to_null:
-                if version[key].isnumeric() and self.parts.get(key, {}).get("final", True):
-                    version[key] = "0"
+                if new_version[key].isnumeric() and self.parts.get(key, {}).get("final", True):
+                    new_version[key] = "0"
                 else:
                     # Either numeric or not final, delete it
-                    del version[key]
+                    del new_version[key]
 
-        return version
+        return new_version
