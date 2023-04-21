@@ -38,6 +38,7 @@ autodoc_mock_imports = [
     "tomli",
 ]
 autodoc_pydantic_model_show_config = True
+autodoc_pydantic_model_show_json = False
 autodoc_pydantic_settings_show_json = False
 
 # -- Options for HTML output -------------------------------------------------
