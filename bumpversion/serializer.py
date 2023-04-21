@@ -20,13 +20,14 @@ class StrictFormatter(Formatter):
     ) -> None:
         """Check that all args were used when filling format."""
         if set(kwargs.keys()) > used_args:
-            raise ValueError("Too many arguments for format")
+            raise TypeError("Too many arguments for format")
 
 
 class FormatSerializer:
     """Serialize version using python `format`."""
 
     def __init__(self, formats: List[str]):
+        self.formatter = StrictFormatter()
         self.formats = formats
 
     def __call__(self, version: dict, /) -> str:
@@ -38,8 +39,8 @@ class FormatSerializer:
         version_dict = {k: v for k, v in version.items() if v is not None}
         for format in self.formats:
             try:
-                return StrictFormatter().format(format, **version_dict)
-            except KeyError:
+                return self.formatter.format(format, **version_dict)
+            except (KeyError, TypeError):
                 pass
         raise ValueError("Version cannot be serialized")
 
