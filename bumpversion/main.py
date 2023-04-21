@@ -30,9 +30,10 @@ def echo(
         _echo(message, nl=nl, err=err)
 
 
-def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
+def _load_settings(ctx: click.Context, param: click.Option, value: str) -> str:
     """Load option defaults from config file."""
-    settings = Settings(config_file=value)
+    # Use `construct` to skip pydantic validation.
+    settings = Settings.construct(config_file=value)  # type: ignore[call-arg]
     ctx.default_map = {
         "dry_run": settings.dry_run,
         "allow_dirty": settings.allow_dirty,
@@ -45,6 +46,8 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
         "tag_message": settings.tag_message,
         "current_version": settings.current_version,
     }
+    # Return the value back, so the config_file is used properly.
+    return value
 
 
 # TODO: Show effective default loaded from config file.
