@@ -1,6 +1,6 @@
 """Bumpversion bumper."""
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypedDict
 
 import semver
 
@@ -27,8 +27,59 @@ class SemVerBumper:
         return parsed_version.to_dict()
 
 
+class PartsDefinition(TypedDict, total=False):
+    """Defines structure of parts for :class:`RegexBumper`."""
+
+    final: bool
+    """Makes the part as contained in a final release.
+
+    Defaults to `True`.
+    """
+    start: int
+    """Sets a starting index for a newly bumped version.
+
+    Defaults to `0`.
+    """
+
+
 class RegexBumper:
-    """Bump version string defined by a regex group."""
+    """Bump version string defined by a regex group.
+
+    Can be configured using `parts` which is a dictionary with `part` definition as keys
+    and values are dictionaries with `final` (bool) and `start` (int) as keys.
+
+    If a definition for a part is missing, it is assumed as `final` and starting at `0`.
+
+    Parts not defined as final are ommited if their values should be zero and no following
+    part has a value.
+
+    The following configuration sets `micro` version as ommited from from final release
+    and sets start value for `rc` to `1` (and ommited as well).
+
+    .. code-block:: toml
+
+       [tool.bumpversion.bumper]
+       cls = "bumpversion.RegexBumper"
+
+       [tool.bumpversion.bumper.parts]
+       micro = { final = false }
+       rc = { final = false, start = 1}
+
+    Assuming `current_version = 1.0`, the resulting sequence of bumping:
+
+    .. code-block::
+
+        micro rc -> rc -> minor
+
+    would be:
+
+    .. code-block::
+
+        1.0 -> 1.0.1rc1 -> 1.0.1rc2 -> 1.1
+    """
+
+    def __init__(self, *, parts: Optional[Dict[str, PartsDefinition]] = None):
+        self.parts = parts or {}
 
     @staticmethod
     def _increase_number(version: str) -> str:
@@ -47,17 +98,17 @@ class RegexBumper:
         for part in bumped_parts:
             parsed_version = version.get(part)
             if parsed_version is None:
-                version[part] = "1"
+                version[part] = str(self.parts.get(part, {}).get("start", 1))
             else:
                 version[part] = self._increase_number(parsed_version)
             # Set the rest of the parts to nulls
             bumped_index = list(version).index(part)
             keys_to_null = list(version)[bumped_index + 1 :]
             for key in keys_to_null:
-                if version[key].isnumeric():
+                if version[key].isnumeric() and self.parts.get(key, {}).get("final", True):
                     version[key] = "0"
                 else:
-                    # We cannot sensibly null nonnumeric part, delete it
+                    # Either numeric or not final, delete it
                     del version[key]
 
         return version

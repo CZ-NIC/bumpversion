@@ -5,6 +5,7 @@ API
    :toctree: generated
 
    bumpversion
+   bumpversion.bumper
    bumpversion.parser
    bumpversion.replacer
    bumpversion.serializer
