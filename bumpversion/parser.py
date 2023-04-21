@@ -30,7 +30,7 @@ class PEP440Parser(RegexParser):
     def __init__(self) -> None:
         regex = re.compile(
             r"(?:(?P<epoch>\d+)!)?"  # Epoch segment: N!
-            r"(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<micro>\d+))?"  # Release segment: N(.N)*
+            r"(?P<major>\d+)(?:\.(?P<minor>\d+)(?:\.(?P<micro>\d+))?)?"  # Release segment: N(.N)*
             r"(?:[-._]?(?:(?:a|alpha)(?P<alpha>\d+)|(?:b|beta)(?P<beta>\d+)|(?:rc|c|pre|preview)(?P<rc>\d+)))?"  # Pre-release segment: {a|b|rc}N # noqa: E501
             r"(?:[-._]?(?:post|r|rev)(?P<post>\d+))?"  # Post-release segment: .postN
             r"(?:[-._]?(?:dev)(?P<dev>\d*))?"  # Development release segment: .devN
