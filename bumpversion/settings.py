@@ -38,6 +38,7 @@ def _config_file_settings(settings: "Settings") -> Dict[str, Any]:
             content = tomli.loads(file.read())
             for section in sections:
                 content = content.get(section, {})
+            content["file"].append({"path": config_file})
             return content
     return {}
 

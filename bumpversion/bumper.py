@@ -27,9 +27,6 @@ class SemVerBumper:
 class RegexBumper:
     """Bump version string defined by a regex group."""
 
-    def __init__(self, options: Dict[str, str]):
-        self.options = options
-
     @staticmethod
     def _increase_number(version: str) -> str:
         regex = re.compile(r"(?P<string>[-._]?\D+)(?P<num>\d+)")
