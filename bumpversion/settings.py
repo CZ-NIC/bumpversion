@@ -1,4 +1,11 @@
-"""Settings module for bumpversion."""
+"""Settings for bumpversion.
+
+Configuration can be defined on CLI or in one of the configuration files.
+Currently supported locations are `bumpversion.toml` and `pyproject.toml` (searched in that order).
+The first found is used.
+
+Arguments defined on CLI have a precedence over definition in configuration file.
+"""
 import os
 from typing import Any, Dict, List, Optional, Tuple, cast
 
@@ -45,8 +52,9 @@ def _config_file_settings(settings: "Settings") -> Dict[str, Any]:
 class Component(BaseModel):
     """Definition of a component in schema.
 
-    cls: Dotted path to a callble
-    extra items are parsed and passed as kwargs to the cls
+    Required key `cls` - a dotted path to a callable.
+
+    All other keys are and passed as kwargs to the cls.
     """
 
     cls: str
@@ -56,7 +64,12 @@ class Component(BaseModel):
 
 
 class File(BaseModel):
-    """Definition of maintained file."""
+    """Definition of maintained file.
+
+    Required key `path` - a relative path to a maintaned file on a filesystem.
+
+    File specific `serializer` and `replacer` can be defined here as well.
+    """
 
     path: FilePath
     serializer: Component
@@ -67,22 +80,49 @@ class File(BaseModel):
 
 
 class Settings(BaseSettings):
-    """Settings."""
+    """Settings class."""
 
     _config_file: Optional[str] = PrivateAttr(None)
     _verbosity: Verbosity = PrivateAttr(Verbosity.INFO)
 
     dry_run: bool = False
+    """Whether actual replacements are performered."""
     commit: bool = False
+    """Whether to create a commit in VCS."""
     tag: bool = False
+    """Whether to create a tag in VCS. Tag is created by prefixing the new version with `v`."""
     allow_dirty: bool = False
+    """Whether to proceed with bumping even though the VCS directory is not in a clean state."""
     current_version: Optional[str] = None
+    """Current version in a string representation. It will be passed through `parser`."""
     version_schema: Optional[Schema] = Field(default=None, alias="schema", env="schema")
+    """
+    What versioning schema to use.
+
+    Currently supported are:
+
+    * `semver`: Semantic Versioning
+    * `pep440`: PEP440 compatible versioning
+
+    Defines default settings for `bumper`, `parser`, `serializer` and `replacer`.
+    """
     bumper: Component = Field(default=None)  # type: ignore[assignment]
+    """
+    Dotted path to a class that performs the actual bump of the `old version` to the `new version`.
+    """
     parser: Component = Field(default=None)  # type: ignore[assignment]
+    """Dotted path to a class that parses the `old version` to a dictionary representation."""
     serializer: Component = Field(default=None)  # type: ignore[assignment]
+    """
+    Dotted path to a class that serializes `new version` from its dictionary representation
+    to a string.
+    """
     replacer: Component = Field(default=None)  # type: ignore[assignment]
+    """
+    Dotted path to a class that perform the replacing of the `old version` by a `new version`.
+    """
     file: List[File] = []
+    """Definition for maintained files."""
 
     class Config:
         extra = Extra.ignore
@@ -108,7 +148,7 @@ class Settings(BaseSettings):
 
     @root_validator
     def schema_definiton(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Check that we either have a schema or all necessary parts."""
+        """Check that either schema is defined or all necessary components are defined."""
         if values.get("version_schema") is not None:
             # Schema is defined, we are going to use that
             return values
@@ -131,7 +171,7 @@ class Settings(BaseSettings):
 
     @validator("file", each_item=True, pre=True)
     def fill_files(cls, v: Dict[str, Any], values: Dict[str, Any]) -> Dict[str, Any]:
-        """Make sure that all files have all settings."""
+        """Pass root level settings to each individual file if not defined."""
         serializer = values.get("serializer")
         replacer = values.get("replacer")
         if v.get("serializer") is None:
@@ -144,7 +184,12 @@ class Settings(BaseSettings):
     def fill_schema(
         cls, v: Optional[Dict[str, Any]], field: ModelField, values: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        """Fill values if schema is used."""
+        """Parse schema to individual settings.
+
+        If schema is used, fill the root level settings for
+        `bumper`, `parser`, `serializer` and `replacer` based on the schema if
+        they are not defined on a root level as well.
+        """
         if v is None and values.get("version_schema") is not None:
             v = get_schema(cast(Schema, values.get("version_schema")), field.name)
         return v
