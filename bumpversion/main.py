@@ -43,34 +43,16 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
 
 
 # TODO: Show effective default loaded from config file.
+@click.command()
+@click.argument("parts", nargs=-1)
+@click.version_option(version=__version__, message="bumpversion %(version)s")
 @click.option(
-    "-m",
-    "--commit-message",
-    help="Commit message",
-)
-@click.option(
-    "--current-version",
-    help="Version that needs to be updated",
-)
-@click.option("--new-version", help="New version that should be in the files")
-@click.option(
-    "--tag/--no-tag",
-    help="Create a tag in version control",
-)
-@click.option(
-    "--commit/--no-commit",
-    help="Commit to version control",
-)
-@click.option(
-    "--allow-dirty",
-    is_flag=True,
-    help="Don't abort if working directory is dirty",
-)
-@click.option(
-    "-n",
-    "--dry-run",
-    is_flag=True,
-    help="Don't write any files, just pretend.",
+    "-v",
+    "--verbosity",
+    type=int,
+    default=Verbosity.INFO,
+    show_default=True,
+    help="Set verbosity level.",
 )
 @click.option(
     "--config-file",
@@ -81,16 +63,34 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
     is_eager=True,
 )
 @click.option(
-    "-v",
-    "--verbosity",
-    type=int,
-    default=Verbosity.INFO,
-    show_default=True,
-    help="Set verbosity level.",
+    "-n",
+    "--dry-run",
+    is_flag=True,
+    help="Don't write any files, just pretend.",
 )
-@click.version_option(version=__version__, message="bumpversion %(version)s")
-@click.argument("parts", nargs=-1)
-@click.command()
+@click.option(
+    "--allow-dirty",
+    is_flag=True,
+    help="Don't abort if working directory is dirty",
+)
+@click.option(
+    "--commit/--no-commit",
+    help="Commit to version control",
+)
+@click.option(
+    "-m",
+    "--commit-message",
+    help="Commit message",
+)
+@click.option(
+    "--tag/--no-tag",
+    help="Create a tag in version control",
+)
+@click.option("--new-version", help="New version that should be in the files")
+@click.option(
+    "--current-version",
+    help="Version that needs to be updated",
+)
 def main(
     parts: Tuple[str, ...],
     new_version: str,
