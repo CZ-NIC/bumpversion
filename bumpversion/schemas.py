@@ -7,7 +7,7 @@ class Schema(str, Enum):
     """Definiton of allowed version_schemas."""
 
     semver = "semver"
-    pep = "pep440"
+    pep440 = "pep440"
 
 
 SCHEMAS = {
@@ -17,7 +17,7 @@ SCHEMAS = {
         "serializer": {"cls": "bumpversion.SemVerSerializer"},
         "replacer": {"cls": "bumpversion.SearchReplaceReplacer"},
     },
-    Schema.pep: {
+    Schema.pep440: {
         "bumper": {"cls": "bumpversion.RegexBumper"},
         "parser": {"cls": "bumpversion.PEP440Parser"},
         "serializer": {"cls": "bumpversion.PEP440Serializer"},
@@ -29,6 +29,11 @@ SCHEMAS = {
 def get_schema(schema: Schema, part: str) -> Dict[str, Any]:
     """Get schema definition."""
     try:
-        return SCHEMAS[schema][part]
+        version_schema = SCHEMAS[schema]
     except KeyError:
         raise ValueError(f"Unknown schema {schema}")
+
+    try:
+        return version_schema[part]
+    except KeyError:
+        raise ValueError(f"Unknown schema part {schema}.{part}")
