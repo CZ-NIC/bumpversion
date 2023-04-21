@@ -1,8 +1,8 @@
 """Settings for bumpversion.
 
 Configuration can be defined on CLI or in one of the configuration files.
-Currently supported locations are `bumpversion.toml` and `pyproject.toml` (searched in that order).
-The first found is used.
+Currently supported locations are `.bumpversion.toml` and `pyproject.toml`
+(searched in that order). The first found is used.
 
 Arguments defined on CLI have a precedence over definition in configuration file.
 """
@@ -27,7 +27,7 @@ from .constants import Verbosity
 from .schemas import Schema, get_schema
 
 CONFIG_FILES = {
-    "bumpversion.toml": ["bumpversion"],
+    ".bumpversion.toml": ["bumpversion"],
     "pyproject.toml": ["tool", "bumpversion"],
 }
 
