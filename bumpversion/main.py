@@ -38,10 +38,16 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
         "commit": settings.commit,
         "tag": settings.tag,
         "current_version": settings.current_version,
+        "commit_message": settings.commit_message_format,
     }
 
 
 # TODO: Show effective default loaded from config file.
+@click.option(
+    "-m",
+    "--commit-message",
+    help="Commit message",
+)
 @click.option(
     "--current-version",
     help="Version that needs to be updated",
@@ -95,6 +101,7 @@ def main(
     commit: bool,
     tag: bool,
     current_version: str,
+    commit_message: str,
 ) -> None:
     """Bump the project version."""
     if not parts and not new_version:
@@ -108,6 +115,7 @@ def main(
         commit=commit,
         tag=tag,
         current_version=current_version,
+        commit_message_format=commit_message,
     )
     settings._verbosity = verbosity
 
@@ -169,12 +177,17 @@ def main(
 
     if commit:
         # Add files to commit.
+        serializer = load_instance(
+            settings.serializer.cls, **settings.serializer.dict(exclude={"cls"})
+        )
         for file in settings.file:
             echo(f"Adding {file.path}", Verbosity.INFO, settings=settings)
             if not settings.dry_run:
                 vcs.add_file(file.path)
         # Do commit.
-        message = f"Bump version: {current_version} → {new_version}"
+        message = settings.commit_message_format.format(
+            new_version=serializer(parsed_new_version.copy()), current_version=current_version
+        )
         echo(f"Commiting: {message}", Verbosity.INFO, settings=settings)
         if not settings.dry_run:
             vcs.commit(message)

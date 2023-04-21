@@ -90,6 +90,12 @@ class Settings(BaseSettings):
     """Whether actual replacements are performered."""
     commit: bool = False
     """Whether to create a commit in VCS."""
+    commit_message_format: str = "Bump version: {current_version} → {new_version}"
+    """
+    The commit message that will be used when creating a commit.
+
+    The message can use `current_version` and `new_version` placeholders.
+    """
     tag: bool = False
     """Whether to create a tag in VCS. Tag is created by prefixing the new version with `v`."""
     allow_dirty: bool = False
