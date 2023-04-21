@@ -45,6 +45,7 @@ def _config_file_settings(settings: "Settings") -> Dict[str, Any]:
             content = tomli.loads(file.read())
             for section in sections:
                 content = content.get(section, {})
+            content.setdefault("file", [])
             content["file"].append({"path": config_file})
             return content
     return {}
@@ -100,9 +101,9 @@ class Settings(BaseSettings):
     """Whether to create a tag in VCS. Tag is created by prefixing the new version with `v`."""
     allow_dirty: bool = False
     """Whether to proceed with bumping even though the VCS directory is not in a clean state."""
-    current_version: Optional[str] = None
+    current_version: str = "0.0.0"
     """Current version in a string representation. It will be passed through `parser`."""
-    version_schema: Optional[Schema] = Field(default=None, alias="schema", env="schema")
+    version_schema: Optional[Schema] = Field(default=Schema.semver, alias="schema", env="schema")
     """
     What versioning schema to use.
 
