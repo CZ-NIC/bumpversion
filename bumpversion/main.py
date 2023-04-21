@@ -1,4 +1,5 @@
 """Command line interface."""
+import shlex
 from typing import Optional, Tuple
 
 import click
@@ -36,9 +37,13 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
         "dry_run": settings.dry_run,
         "allow_dirty": settings.allow_dirty,
         "commit": settings.commit,
+        "message": settings.commit_message,
+        "commit_args": settings.commit_args,
         "tag": settings.tag,
+        "tag_name": settings.tag_name,
+        "sign_tags": settings.sign_tags,
+        "tag_message": settings.tag_message,
         "current_version": settings.current_version,
-        "commit_message": settings.commit_message_format,
     }
 
 
@@ -82,10 +87,14 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> None:
     "--commit-message",
     help="Commit message",
 )
+@click.option("--commit-args", help="Extra arguments to commit command")
 @click.option(
     "--tag/--no-tag",
     help="Create a tag in version control",
 )
+@click.option("--tag-name", help="Tag name (only works with --tag)")
+@click.option("--sign-tags/--no-sign-tags", help="Sign tags if created")
+@click.option("--tag-message", help="Tag message")
 @click.option("--new-version", help="New version that should be in the files")
 @click.option(
     "--current-version",
@@ -99,9 +108,13 @@ def main(
     dry_run: bool,
     allow_dirty: bool,
     commit: bool,
-    tag: bool,
-    current_version: str,
     commit_message: str,
+    commit_args: str,
+    tag: bool,
+    tag_name: str,
+    sign_tags: bool,
+    tag_message: str,
+    current_version: str,
 ) -> None:
     """Bump the project version."""
     if not parts and not new_version:
@@ -113,9 +126,13 @@ def main(
         dry_run=dry_run,
         allow_dirty=allow_dirty,
         commit=commit,
+        commit_message=commit_message,
+        commit_args=shlex.split(commit_args),
         tag=tag,
+        tag_name=tag_name,
+        sign_tags=sign_tags,
+        tag_message=tag_message,
         current_version=current_version,
-        commit_message_format=commit_message,
     )
     settings._verbosity = verbosity
 
@@ -138,7 +155,12 @@ def main(
             settings.bumper.cls,
             **settings.bumper.dict(exclude={"cls"}),
         )
+        serializer = load_instance(
+            settings.serializer.cls,
+            **settings.serializer.dict(exclude={"cls"}),
+        )
         parsed_new_version = bumper(parsed_current_version.copy(), parts)
+        new_version = serializer(parsed_new_version)
 
     echo(f"Parsed new version: {parsed_new_version}", Verbosity.DEBUG, settings=settings)
 
@@ -175,6 +197,7 @@ def main(
                 path=settings._config_file,
             )
 
+    message_context = {"current_version": current_version, "new_version": new_version}
     if commit:
         # Add files to commit.
         serializer = load_instance(
@@ -185,16 +208,16 @@ def main(
             if not settings.dry_run:
                 vcs.add_file(file.path)
         # Do commit.
-        message = settings.commit_message_format.format(
-            new_version=serializer(parsed_new_version.copy()), current_version=current_version
-        )
+        message = settings.commit_message.format(**message_context)
         echo(f"Commiting: {message}", Verbosity.INFO, settings=settings)
         if not settings.dry_run:
-            vcs.commit(message)
+            vcs.commit(message, extra_args=settings.commit_args)
     if tag:
-        echo(f"Tagging {new_version}", Verbosity.INFO, settings=settings)
+        tag_name = settings.tag_name.format(**message_context)
+        tag_message = settings.tag_message.format(**message_context)
+        echo(f"Tagging {tag_name}", Verbosity.INFO, settings=settings)
         if not settings.dry_run:
-            vcs.tag(new_version)
+            vcs.tag(tag_name, message=tag_message, sign_tags=settings.sign_tags)
 
 
 if __name__ == "__main__":

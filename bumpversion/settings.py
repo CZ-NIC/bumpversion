@@ -89,18 +89,37 @@ class Settings(BaseSettings):
 
     dry_run: bool = False
     """Whether actual replacements are performered."""
+    allow_dirty: bool = False
+    """Whether to proceed with bumping even though the VCS directory is not in a clean state."""
     commit: bool = False
     """Whether to create a commit in VCS."""
-    commit_message_format: str = "Bump version: {current_version} → {new_version}"
+    commit_message: str = "Bump version: {current_version} → {new_version}"
     """
     The commit message that will be used when creating a commit.
 
     The message can use `current_version` and `new_version` placeholders.
     """
+    commit_args: List[str] = []
+    """Extra arguments to commit command.
+
+    This is for example useful to add `-s` to generate `Signed-off-by:` line in the commit message.
+    """
     tag: bool = False
     """Whether to create a tag in VCS. Tag is created by prefixing the new version with `v`."""
-    allow_dirty: bool = False
-    """Whether to proceed with bumping even though the VCS directory is not in a clean state."""
+    tag_name: str = "v{new_version}"
+    """
+    The name of the tag that will be created.
+
+    The message can use `current_version` and `new_version` placeholders.
+    """
+    tag_message: str = "Bump version: {current_version} → {new_version}"
+    """
+    The tag message that will be used when creating a tag.
+
+    The message can use `current_version` and `new_version` placeholders.
+    """
+    sign_tags: bool = False
+    """Whether to sign tags."""
     current_version: str = "0.0.0"
     """Current version in a string representation. It will be passed through `parser`."""
     version_schema: Optional[Schema] = Field(default=Schema.semver, alias="schema", env="schema")

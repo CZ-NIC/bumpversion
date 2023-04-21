@@ -1,7 +1,7 @@
 """Version control system management."""
 import subprocess  # nosec
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, List
 
 
 class Git:
@@ -24,10 +24,13 @@ class Git:
         """Add file to a version control."""
         subprocess.run(["git", "add", path], check=True)  # nosec
 
-    def commit(self, message: str) -> None:
+    def commit(self, message: str, *, extra_args: List[str]) -> None:
         """Make a commit."""
-        subprocess.run(["git", "commit", "--message", message], check=True)  # nosec
+        subprocess.run(["git", "commit", "--message", message] + extra_args, check=True)  # nosec
 
-    def tag(self, tag: str) -> None:
+    def tag(self, tag: str, *, message: str, sign_tags: bool) -> None:
         """Make a tag."""
-        subprocess.run(["git", "tag", tag], check=True)  # nosec
+        cmd = ["git", "tag", tag, "--message", message]
+        if sign_tags:
+            cmd += ["--sign"]
+        subprocess.run(cmd, check=True)  # nosec
