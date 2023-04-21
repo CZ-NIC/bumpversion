@@ -1,6 +1,6 @@
 """Bumpversion bumper."""
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import semver
 
@@ -8,8 +8,11 @@ import semver
 class SemVerBumper:
     """Bump version according to SemVer."""
 
-    def __init__(self, options: Dict[str, Any]):
-        self.options = options
+    def __init__(
+        self, *, build_token: Optional[str] = None, prerelease_token: Optional[str] = None
+    ):
+        self.build_token = build_token
+        self.prerelease_token = prerelease_token
 
     def __call__(self, version: Dict[str, Any], bumped_parts: List[str]) -> Dict[str, Any]:
         """Bump version specified by options."""
@@ -17,7 +20,7 @@ class SemVerBumper:
         for part in bumped_parts:
             if part in ("prerelease", "build"):
                 parsed_version = getattr(parsed_version, "bump_" + part)(
-                    token=self.options.get(part + "_token", None)
+                    token=getattr(self, part + "_token")
                 )
             else:
                 parsed_version = parsed_version.next_version(part)
