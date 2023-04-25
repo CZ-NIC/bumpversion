@@ -9,7 +9,7 @@ from bumpversion import __version__
 from bumpversion.constants import Verbosity
 from bumpversion.settings import Settings
 from bumpversion.utils import load_instance
-from bumpversion.vcs import Git
+from bumpversion.vcs import AbstractVcs, get_vcs
 
 
 def echo(
@@ -164,11 +164,12 @@ def main(
 
     echo(f"Parsed new version: {parsed_new_version}", Verbosity.DEBUG, settings=settings)
 
-    vcs = Git()
+    vcs = get_vcs()
     # Check dirty
-    dirty_files = tuple(vcs.get_dirty_files())
-    if not settings.allow_dirty and dirty_files:
-        exit(f"Git directory not clean: {dirty_files}")
+    if vcs and not settings.allow_dirty:
+        dirty_files = tuple(vcs.get_dirty_files())
+        if dirty_files:
+            exit(f"VCS directory not clean: {dirty_files}")
 
     # Bump files
     for file in settings.file:
@@ -197,12 +198,15 @@ def main(
                 path=settings._config_file,
             )
 
-    message_context = {"current_version": current_version, "new_version": new_version}
-    if commit:
+    if vcs:
+        _handle_vcs(new_version, vcs, settings)
+
+
+def _handle_vcs(new_version: str, vcs: AbstractVcs, settings: Settings) -> None:
+    """Handle operations on VCS."""
+    message_context = {"current_version": settings.current_version, "new_version": new_version}
+    if settings.commit:
         # Add files to commit.
-        serializer = load_instance(
-            settings.serializer.cls, **settings.serializer.dict(exclude={"cls"})
-        )
         for file in settings.file:
             echo(f"Adding {file.path}", Verbosity.INFO, settings=settings)
             if not settings.dry_run:
@@ -212,7 +216,7 @@ def main(
         echo(f"Commiting: {message}", Verbosity.INFO, settings=settings)
         if not settings.dry_run:
             vcs.commit(message, extra_args=settings.commit_args)
-    if tag:
+    if settings.tag:
         tag_name = settings.tag_name.format(**message_context)
         tag_message = settings.tag_message.format(**message_context)
         echo(f"Tagging {tag_name}", Verbosity.INFO, settings=settings)
