@@ -4,7 +4,7 @@ from .parser import PEP440Parser, SemVerParser
 from .replacer import SearchReplaceReplacer
 from .serializer import FormatSerializer, PEP440Serializer, SemVerSerializer
 
-__version__ = "0.1.0"
+__version__ = "0.0.0"
 
 __all__ = [
     "FormatSerializer",
