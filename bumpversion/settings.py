@@ -36,9 +36,10 @@ def _config_file_settings(settings: "Settings") -> Dict[str, Any]:
     config_file = settings._config_file
     sections = ["bumpversion"]
     if config_file is None:
-        for config_file, _sections in CONFIG_FILES.items():
-            if os.path.isfile(config_file):
+        for _config_file, _sections in CONFIG_FILES.items():
+            if os.path.isfile(_config_file):
                 sections = _sections
+                config_file = _config_file
                 break
     if config_file:
         with open(config_file) as file:

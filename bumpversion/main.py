@@ -33,7 +33,7 @@ def echo(
 def _load_settings(ctx: click.Context, param: click.Option, value: str) -> str:
     """Load option defaults from config file."""
     # Use `construct` to skip pydantic validation.
-    settings = Settings.construct(config_file=value)  # type: ignore[call-arg]
+    settings = Settings(config_file=value)
     ctx.default_map = {
         "dry_run": settings.dry_run,
         "allow_dirty": settings.allow_dirty,
