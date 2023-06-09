@@ -37,7 +37,9 @@ class Git(AbstractVcs):
     def is_available(cls) -> bool:
         """Return whether version control system is available."""
         try:
-            subprocess.run(["git", "rev-parse", "--git-dir"], check=True)  # nosec
+            subprocess.run(
+                ["git", "rev-parse", "--git-dir"], check=True, stdout=subprocess.DEVNULL
+            )  # nosec
         except (FileNotFoundError, subprocess.CalledProcessError):
             return False
         return True
