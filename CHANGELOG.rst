@@ -7,3 +7,9 @@ ChangeLog
 
 Unreleased
 ----------
+
+
+0.1.0a1 (2023-06-26)
+--------------------
+
+* Initial version

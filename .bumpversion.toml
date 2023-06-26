@@ -1,0 +1,15 @@
+[bumpversion]
+current_version = "0.1.0a1"
+schema = "pep440"
+commit = true
+tag = true
+
+[[bumpversion.file]]
+path = "setup.cfg"
+search = "version = {current_version}"
+replace = "version = {new_version}"
+
+[[bumpversion.file]]
+path = "bumpversion/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
