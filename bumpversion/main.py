@@ -39,7 +39,7 @@ def _load_settings(ctx: click.Context, param: click.Option, value: str) -> str:
         "allow_dirty": settings.allow_dirty,
         "commit": settings.commit,
         "commit_message": settings.commit_message,
-        "commit_args": settings.commit_args,
+        "commit_args": shlex.join(settings.commit_args),
         "tag": settings.tag,
         "tag_name": settings.tag_name,
         "sign_tags": settings.sign_tags,
