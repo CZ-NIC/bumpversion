@@ -1,5 +1,5 @@
 [bumpversion]
-current_version = "0.0.0"
+current_version = "0.1.0a1"
 schema = "pep440"
 commit = true
 tag = true
